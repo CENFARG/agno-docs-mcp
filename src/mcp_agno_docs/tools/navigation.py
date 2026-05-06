@@ -6,6 +6,8 @@ plus the internal function for returning the pre-loaded navigation tree.
 
 from __future__ import annotations
 
+from typing import Any
+
 from mcp_agno_docs.models import NavTree
 
 from . import mcp
@@ -31,7 +33,7 @@ def _get_navigation(nav: NavTree) -> NavTree:
 # ---- FastMCP tool wrapper ----
 
 @mcp.tool()
-async def get_navigation() -> dict:
+async def get_navigation() -> dict[str, Any]:
     """Return the Agno documentation navigation tree.
 
     Returns a hierarchical tree structure with tabs, groups, and pages

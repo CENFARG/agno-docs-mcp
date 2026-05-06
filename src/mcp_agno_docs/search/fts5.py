@@ -100,7 +100,7 @@ class FTS5Engine(SearchEngine):
                 "FROM docs "
                 "WHERE docs MATCH ?"
             )
-            params: list = [query]
+            params: list[str | int] = [query]
 
             if topic:
                 sql += " AND keywords MATCH ?"

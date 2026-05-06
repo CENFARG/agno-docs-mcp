@@ -101,4 +101,4 @@ def _configure_lifespan(docs_root: Path) -> None:
             logger.info("Shutting down ...")
             await engine.close()
 
-    mcp._mcp_server.lifespan = lifespan  # type: ignore[attr-defined]
+    mcp._mcp_server.lifespan = lifespan

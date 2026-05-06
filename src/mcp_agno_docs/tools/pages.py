@@ -6,6 +6,8 @@ internal functions for path normalisation and page lookup.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pydantic as _pydantic
 
 from mcp_agno_docs import errors as domain_err
@@ -73,7 +75,7 @@ def _get_page(source: DocSource, path: str) -> DocPage:
 # ---- FastMCP tool wrapper ----
 
 @mcp.tool()
-async def get_page(path: str) -> dict:
+async def get_page(path: str) -> dict[str, Any]:
     """Retrieve a documentation page by its relative path.
 
     Returns the full page content including parsed YAML frontmatter

@@ -7,6 +7,8 @@ contain the business logic and accept explicit engine dependencies.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pydantic as _pydantic
 
 from mcp_agno_docs import errors as domain_err
@@ -89,7 +91,7 @@ async def search_docs(
     query: str,
     topic: str | None = None,
     limit: int = 10,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Full-text search across Agno documentation with optional topic filter.
 
     Searches the entire Agno docs corpus using BM25 relevance ranking.
@@ -115,7 +117,7 @@ async def search_docs(
 async def search_examples(
     query: str,
     limit: int = 10,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Search only the examples/ section of Agno documentation.
 
     Like ``search_docs`` but scoped to pages whose path starts with

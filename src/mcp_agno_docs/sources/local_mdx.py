@@ -10,6 +10,7 @@ event loop is never blocked.
 
 import asyncio
 import logging
+from collections.abc import Iterator
 from pathlib import Path
 
 import yaml
@@ -82,7 +83,7 @@ class LocalMDXSource(DocSource):
         """Return sorted list of all known page paths."""
         return sorted(self._pages.keys())
 
-    def iter_index_documents(self):
+    def iter_index_documents(self) -> Iterator[IndexDocument]:
         """Yield :class:`IndexDocument` for every valid loaded page."""
         for page in self._pages.values():
             yield IndexDocument(
