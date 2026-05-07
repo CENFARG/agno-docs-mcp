@@ -5,30 +5,58 @@
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
 [![MCP](https://img.shields.io/badge/protocol-MCP-black)](https://modelcontextprotocol.io)
+[![CI](https://github.com/gonzalorrecalde/agno-docs-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/gonzalorrecalde/agno-docs-mcp/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)](https://github.com/gonzalorrecalde/agno-docs-mcp)
 
 ## What is this?
 
-A [Model Context Protocol](https://modelcontextprotocol.io) server that gives LLMs fast, accurate access to the [Agno framework](https://docs.agno.com) documentation. Uses SQLite FTS5 with BM25 ranking for full-text search across 3,800+ documentation pages, with snippet highlighting and navigation tree access.
+A [Model Context Protocol](https://modelcontextprotocol.io) server that gives LLMs fast, accurate access to the [Agno framework](https://docs.agno.com) documentation. Uses SQLite FTS5 with **BM25 ranking** for full-text search across 3,800+ documentation pages, with snippet highlighting and navigation tree access.
+
+Built with a **pluggable hexagonal architecture**: `DocSource` and `SearchEngine` are abstract ports — swap implementations without touching tool logic.
 
 ## Why not the official MCP?
 
-The official Agno MCP at `https://docs.agno.com/mcp` has issues:
-- Search returns 404 links
-- Content is repetitive (chunked, duplicated sections)
-- No access to clean individual pages
+| Official MCP (`docs.agno.com/mcp`) | agno-docs-mcp |
+|---|---|
+| Search returns 404 links | BM25-ranked results from FTS5 index |
+| Chunked content, 3-5x duplication | Clean individual `.mdx` pages |
+| No individual page access | `get_page()` with frontmatter |
+| No navigation structure | Full `docs.json` tree |
+| No code-only search | `search_examples()` scoped to 1,797 code examples |
 
-This server fixes all of that:
-- **FTS5 search** with BM25 ranking — accurate, relevance-sorted results
-- **Clean page retrieval** — individual `.mdx` pages with frontmatter
-- **Navigation tree** — full `docs.json` structure for hierarchical browsing
-- **Examples search** — scoped search across 1,797 code examples
+## Demo
+
+```
+[search_docs] 'MCP agent tools':
+  1. Overview                       score=-7.46  examples/tools/mcp/overview.mdx
+  2. Mcp Demo                       score=-7.38  examples/agent-os/mcp-demo/overview.mdx
+  3. MCP Integration                score=-7.38  cookbook/tools/mcp.mdx
+
+[get_page] 'culture/overview.mdx':
+  Title: What is Culture?
+  11,116 chars — full MDX with code examples
+
+[get_navigation] 7 tabs:
+  Home, SDK, AgentOS, Deploy, Examples, Reference, FAQs
+```
 
 ## Quick Start
+
+### Prerequisites
+
+- Python 3.11+
+- [Agno documentation](https://github.com/agno-agi/agno-docs) cloned locally (3,831 `.mdx` files)
 
 ### Install
 
 ```bash
 pip install agno-docs-mcp
+```
+
+Or with `uv` (zero-config, auto-manages venv):
+
+```bash
+uv run --directory /path/to/agno-docs-mcp mcp-agno-docs /path/to/agno-docs
 ```
 
 ### Run
@@ -44,9 +72,25 @@ export AGNO_DOCS_PATH=/path/to/agno-docs
 mcp-agno-docs
 ```
 
+Startup time: ~2 seconds (indexes 3,826 `.mdx` files + `docs.json` into FTS5).
+
 ## MCP Client Configuration
 
-Add to your MCP client config:
+### OpenCode / Claude Code
+
+```json
+{
+  "mcp": {
+    "agno-docs": {
+      "type": "local",
+      "command": ["python", "-m", "mcp_agno_docs", "/path/to/agno-docs"],
+      "enabled": true
+    }
+  }
+}
+```
+
+### Claude Desktop
 
 ```json
 {
@@ -59,17 +103,14 @@ Add to your MCP client config:
 }
 ```
 
-### OpenCode Configuration
-
-Add to `opencode.json`:
+### Cursor / Windsurf
 
 ```json
 {
-  "mcp": {
+  "mcpServers": {
     "agno-docs": {
-      "type": "local",
-      "command": ["python", "-m", "mcp_agno_docs", "C:\\path\\to\\agno-docs"],
-      "enabled": true
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/agno-docs-mcp", "mcp-agno-docs", "/path/to/agno-docs"]
     }
   }
 }
@@ -77,36 +118,118 @@ Add to `opencode.json`:
 
 ## Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_docs(query, topic?, limit?)` | Full-text search with BM25 ranking and `<b>` highlighted snippets |
-| `get_page(path)` | Retrieve a single documentation page with frontmatter |
-| `get_navigation()` | Return the full docs.json navigation tree |
-| `search_examples(query, limit?)` | Scoped search across examples/ directory |
+| Tool | Signature | Description |
+|------|-----------|-------------|
+| `search_docs` | `(query: str, topic?: str, limit?: int) → list[DocHit]` | Full-text search with BM25 ranking and `<b>` highlighted snippets |
+| `get_page` | `(path: str) → DocPage` | Retrieve a single `.mdx` page with YAML frontmatter |
+| `get_navigation` | `() → NavTree` | Full hierarchical navigation tree from `docs.json` |
+| `search_examples` | `(query: str, limit?: int) → list[DocHit]` | Scoped search across `examples/` directory |
+
+### Search Features
+
+- **BM25 ranking**: Relevance-sorted results (lower score = more relevant)
+- **Porter stemming**: `agent` matches `agents`, `agentic`
+- **Topic filter**: Narrow by frontmatter `keywords` field
+- **Snippet highlighting**: `<b>...</b>` markup around matched terms
+- **Over-fetching**: `search_examples` fetches 4x limit internally to compensate for filtering
 
 ## Architecture
 
 ```
-src/mcp_agno_docs/
-├── server.py         # FastMCP app + lifespan (DI wiring)
-├── __main__.py       # CLI entry point
-├── models.py         # Pydantic v2 schemas
-├── errors.py         # Domain exceptions
-├── sources/          # DocSource ABC + LocalMDXSource
-├── search/           # SearchEngine ABC + FTS5Engine
-├── tools/            # MCP tool handlers
-└── indexer/          # docs.json navigation parser
+                    ┌─────────────────────────────────┐
+                    │     FastMCP Server (stdio)       │
+                    │  lifespan → AppContext            │
+                    │     ├── LocalMDXSource            │
+                    │     ├── FTS5Engine               │
+                    │     └── NavTree (cached)          │
+                    └──────────┬──────────────────────┘
+                               │
+            ┌──────────────────┼──────────────────┐
+            ▼                  ▼                  ▼
+     search_docs           get_page         get_navigation
+     search_examples
+            │                  │                  │
+            ▼                  ▼                  ▼
+     SearchEngine (ABC)   DocSource (ABC)    NavTree cache
+            │                  │
+            ▼                  ▼
+       FTS5Engine        LocalMDXSource
+            │                  │
+            ▼                  ▼
+   SQLite FTS5 (:memory:)  Filesystem: *.mdx + docs.json
 ```
+
+**Key patterns:**
+- **Hexagonal ports**: `DocSource` and `SearchEngine` are abstract — future adapters (vector search, remote docs) require zero changes to tools
+- **Dependency injection**: `AppContext` wires adapters at startup; tools never import SQLite or filesystem directly
+- **Async wrappers**: All blocking I/O (disk, SQLite) runs in `asyncio.to_thread`
 
 ## Development
 
 ```bash
+git clone https://github.com/gonzalorrecalde/agno-docs-mcp.git
+cd agno-docs-mcp
 pip install -e ".[dev]"
-pytest                     # 116 tests
-ruff check                 # lint
-mypy src/                  # type check
 ```
+
+### Quality Gates
+
+| Tool | Command | Target |
+|------|---------|--------|
+| Tests | `pytest` | 146 tests, 0 failures |
+| Coverage | `pytest --cov=src/mcp_agno_docs --cov-fail-under=80` | ≥80% |
+| Lint | `ruff check src/` | 0 violations |
+| Type check | `mypy src/ --strict` | 0 errors |
+
+### Project Structure
+
+```
+agno-docs-mcp/
+├── src/mcp_agno_docs/
+│   ├── server.py          # FastMCP app + lifespan
+│   ├── __main__.py        # CLI entry (python -m mcp_agno_docs)
+│   ├── models.py          # Pydantic v2 schemas (12 models)
+│   ├── errors.py          # Domain exceptions (5 classes)
+│   ├── sources/
+│   │   ├── base.py        # DocSource ABC
+│   │   └── local_mdx.py   # LocalMDXSource adapter
+│   ├── search/
+│   │   ├── base.py        # SearchEngine ABC
+│   │   └── fts5.py        # FTS5Engine adapter
+│   ├── tools/
+│   │   ├── search.py      # search_docs + search_examples
+│   │   ├── pages.py       # get_page
+│   │   └── navigation.py  # get_navigation
+│   └── indexer/
+│       └── navigation.py  # docs.json → NavTree parser
+├── tests/
+│   ├── unit/              # 6 test files (mocked dependencies)
+│   ├── integration/       # 3 test files (real sqlite + files)
+│   ├── e2e/               # MCP client stdio tests
+│   └── fixtures/docs/     # 9 synthetic .mdx files + docs.json
+├── .github/workflows/     # CI: lint + mypy + pytest (3.11, 3.12)
+├── pyproject.toml         # hatchling build, dev deps, tool configs
+├── README.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+├── CODE_OF_CONDUCT.md
+└── LICENSE                # Apache 2.0
+```
+
+## Roadmap
+
+| Milestone | Feature | Status |
+|-----------|---------|--------|
+| **v0.1.0** | Core MCP server with FTS5 search | ✅ Complete |
+| **v0.2.0** | MCP Resources (`agno-docs://` URIs) | Planned |
+| **v0.3.0** | Watch mode — auto-reindex on file changes | Planned |
+| **v0.4.0** | SSE transport — remote server mode | Planned |
+| **v0.5.0** | Semantic + hybrid search (embeddings) | Planned |
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+Apache 2.0 — see [LICENSE](./LICENSE).
+
+---
+
+Built with ❤️ using [FastMCP](https://github.com/jlowin/fastmcp), [FTS5](https://www.sqlite.org/fts5.html), and [Pydantic v2](https://docs.pydantic.dev).
