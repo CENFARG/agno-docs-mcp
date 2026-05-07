@@ -146,6 +146,44 @@ class TestSearchExamples:
 
         mock_engine.search.assert_not_awaited()
 
+    @pytest.mark.asyncio
+    async def test_retries_when_fewer_than_limit(self) -> None:
+        """When filtered results < limit, retries with higher multiplier (up to 8×)."""
+        mock_engine = AsyncMock(spec=SearchEngine)
+        # First call (4×): 2 examples found.  2 < limit=5 → retry with 8×.
+        # Second call (8×): 2 examples found.  2 < limit=5 but multiplier=8 max → stop.
+        non_example = _make_search_hit("api/other.mdx", "Other", score=10.0)
+        example = _make_search_hit("examples/demo.mdx", "Demo", score=1.0)
+        mock_engine.search.side_effect = [
+            [example, non_example],  # first call: 1 example out of 2
+            [example, non_example],  # second call: still 1 example out of 2
+        ]
+
+        result = await _search_examples(mock_engine, "query", limit=5)
+
+        # Both calls made: 4× then 8×.
+        assert mock_engine.search.call_count == 2
+        mock_engine.search.assert_any_call("query", topic=None, limit=20)  # 4×5
+        mock_engine.search.assert_any_call("query", topic=None, limit=40)  # 8×5
+        assert len(result) == 1
+        assert result[0].path == "examples/demo.mdx"
+
+    @pytest.mark.asyncio
+    async def test_stops_retry_when_enough_found(self) -> None:
+        """When enough examples are found in first try, no retry occurs."""
+        mock_engine = AsyncMock(spec=SearchEngine)
+        examples = [
+            _make_search_hit(f"examples/p{i}.mdx", f"Page {i}", score=float(i))
+            for i in range(10)
+        ]
+        mock_engine.search.return_value = examples
+
+        result = await _search_examples(mock_engine, "page", limit=3)
+
+        # Single call — 4× multiplier found enough examples.
+        mock_engine.search.assert_awaited_once()
+        assert len(result) == 3
+
 
 # ---- get_page path normalisation ----
 

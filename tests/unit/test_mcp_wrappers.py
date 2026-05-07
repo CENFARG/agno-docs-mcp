@@ -115,7 +115,7 @@ class TestSearchExamplesToolWrapper:
     @pytest.mark.asyncio
     @patch("mcp_agno_docs.tools.search.mcp.get_context")
     async def test_default_limit_for_examples(self, mock_get_context):
-        """Default limit=10 for search_examples."""
+        """Default limit=10 for search_examples with retry on empty results."""
         from mcp_agno_docs.tools.search import search_examples
 
         engine = AsyncMock(spec=SearchEngine)
@@ -123,7 +123,10 @@ class TestSearchExamplesToolWrapper:
         mock_get_context.return_value = _make_mock_context(engine=engine)
 
         await search_examples("query")
-        engine.search.assert_awaited_once_with("query", topic=None, limit=40)
+        # With retry logic, empty results trigger two calls: 4× then 8×.
+        assert engine.search.call_count == 2
+        engine.search.assert_any_call("query", topic=None, limit=40)
+        engine.search.assert_any_call("query", topic=None, limit=80)
 
 
 class TestGetPageToolWrapper:
@@ -190,7 +193,7 @@ class TestGetNavigationToolWrapper:
         ]))
         mock_get_context.return_value = _make_mock_context(nav=tree)
 
-        result = await get_navigation()
+        result = get_navigation()
         assert result["root"]["title"] == "Docs"
         assert len(result["root"]["children"]) == 1
 
@@ -203,7 +206,7 @@ class TestGetNavigationToolWrapper:
         tree = NavTree(root=NavNode(title="Docs"))
         mock_get_context.return_value = _make_mock_context(nav=tree)
 
-        result = await get_navigation()
+        result = get_navigation()
         assert result["root"]["title"] == "Docs"
 
 
@@ -220,5 +223,5 @@ class TestNavigationErrorWrapping:
         tree = NavTree(root=NavNode(title="Docs"))
         mock_get_context.return_value = _make_mock_context(nav=tree)
 
-        result = await get_navigation()
+        result = get_navigation()
         assert "root" in result
