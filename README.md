@@ -128,6 +128,21 @@ Startup time: ~2 seconds (indexes 3,826 `.mdx` files + `docs.json` into FTS5).
 }
 ```
 
+### Gemini CLI
+
+Add to `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "agno-docs": {
+      "command": "python",
+      "args": ["-m", "mcp_agno_docs", "/path/to/agno-docs"]
+    }
+  }
+}
+```
+
 ## Tools
 
 | Tool | Signature | Description |

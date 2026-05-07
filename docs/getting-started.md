@@ -6,7 +6,7 @@ This tutorial walks you from zero to running your first MCP query in under 5 min
 
 - **Python 3.11** or later
 - The [Agno documentation](https://github.com/agno-agi/agno-docs) cloned locally (3,831 `.mdx` files and a `docs.json`)
-- An MCP-compatible client (Claude Desktop, OpenCode, Cursor, Windsurf)
+- An MCP-compatible client (Claude Desktop, OpenCode, Gemini CLI, Cursor, Windsurf)
 
 ## Step 1: Install
 
@@ -84,7 +84,22 @@ Startup takes ~2 seconds — it indexes all `.mdx` files into an in-memory FTS5 
   "mcpServers": {
     "agno-docs": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/agno-docs-mcp", "mcp-agno-docs", "/path/to/agno-docs/docs"]
+      "args": ["run", "--directory", "/path/to/agno-docs-mcp", "mcp-agno-docs", "/path/to/agno-docs"]
+    }
+  }
+}
+```
+
+### Gemini CLI
+
+Add to `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "agno-docs": {
+      "command": "python",
+      "args": ["-m", "mcp_agno_docs", "/path/to/agno-docs"]
     }
   }
 }
