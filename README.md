@@ -7,10 +7,12 @@
 [![MCP](https://img.shields.io/badge/protocol-MCP-black)](https://modelcontextprotocol.io)
 [![CI](https://github.com/CENFARG/agno-docs-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/CENFARG/agno-docs-mcp/actions/workflows/test.yml)
 [![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/CENFARG/agno-docs-mcp)
-[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0-blue)](https://pypi.org/project/agno-docs-mcp)
+[![PyPI version](https://img.shields.io/badge/pypi-coming%20soon-orange)](https://pypi.org)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://cenfarg.github.io/agno-docs-mcp)
 [![OpenSSF Best Practices](https://img.shields.io/badge/openssf-passing-brightgreen)](https://www.bestpractices.dev/projects)
 [![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg)](#contributors)
+[![ES](https://img.shields.io/badge/lang-ES-yellow)](./README.es.md)
+[![ZH](https://img.shields.io/badge/lang-ZH-red)](./README.zh.md)
 
 ## What is this?
 
@@ -54,14 +56,20 @@ Built with a **pluggable hexagonal architecture**: `DocSource` and `SearchEngine
 ### Install
 
 ```bash
-pip install agno-docs-mcp
+git clone https://github.com/CENFARG/agno-docs-mcp.git
+cd agno-docs-mcp
+pip install -e ".[dev]"
 ```
 
 Or with `uv` (zero-config, auto-manages venv):
 
 ```bash
-uv run --directory /path/to/agno-docs-mcp mcp-agno-docs /path/to/agno-docs
+git clone https://github.com/CENFARG/agno-docs-mcp.git
+cd agno-docs-mcp
+uv run mcp-agno-docs /path/to/agno-docs
 ```
+
+> **Note**: PyPI package coming soon. For now, install from source.
 
 ### Run
 
