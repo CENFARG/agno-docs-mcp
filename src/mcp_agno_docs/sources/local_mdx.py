@@ -23,6 +23,7 @@ from mcp_agno_docs.models import (
     LocalSourceConfig,
 )
 from mcp_agno_docs.sources.base import DocSource
+from mcp_agno_docs.utils import normalise_path
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +69,9 @@ class LocalMDXSource(DocSource):
         Raises:
             PageNotFound: Path not in loaded pages.
             PageInvalid: Path exists but was marked invalid.
+            ValidationError: If *path* contains ``..`` (traversal attempt).
         """
-        normalised = _normalise_path(path)
+        normalised = normalise_path(path)
         if normalised in self._invalid:
             raise PageInvalid(
                 f"Page {normalised} is invalid: {self._invalid[normalised]}"
@@ -179,15 +181,3 @@ def _split_frontmatter(raw: str) -> tuple[DocFrontmatter | str | None, str]:
         return f"Frontmatter validation failed: {exc}", content
 
     return fm, content
-
-
-def _normalise_path(path: str) -> str:
-    """Normalise a requested path and reject path-traversal attempts.
-
-    Strips leading ``/``, collapses ``..``, and ensures POSIX separators.
-    """
-    clean = path.replace("\\", "/").lstrip("/")
-    segments = [s for s in clean.split("/") if s not in ("", ".")]
-    if ".." in segments:
-        raise PageNotFound(f"Path traversal rejected: {path!r}")
-    return "/".join(segments)
