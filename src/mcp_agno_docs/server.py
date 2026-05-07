@@ -11,7 +11,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
 from mcp_agno_docs.indexer.navigation import load_navigation
 from mcp_agno_docs.models import (
@@ -77,11 +77,24 @@ def _configure_lifespan(docs_root: Path) -> None:
 
     The lifespan is installed directly on the low-level ``_mcp_server``
     because ``FastMCP.lifespan`` is a constructor-only parameter.
+
+    .. note::
+
+        ``_mcp_server.lifespan`` is a known technical debt point.
+        FastMCP does not currently expose a public API to replace the
+        lifespan after construction. We use ``Any`` for the *server*
+        parameter because the concrete type is a private FastMCP
+        implementation detail not exported by the library.
     """
 
     @asynccontextmanager
-    async def lifespan(server: object) -> AsyncIterator[AppContext]:
-        """Wire adapters, load docs, index, and serve."""
+    async def lifespan(server: Any) -> AsyncIterator[AppContext]:
+        """Wire adapters, load docs, index, and serve.
+
+        Args:
+            server: FastMCP internal server instance (private API —
+                typed as ``Any`` since FastMCP does not export it).
+        """
         source = LocalMDXSource(LocalSourceConfig(root_path=docs_root))
         engine = FTS5Engine(FTS5Config())
         try:
