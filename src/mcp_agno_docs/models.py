@@ -4,8 +4,6 @@ All tool I/O and domain types are defined here as a single source of truth.
 FastMCP integrates with Pydantic directly for JSON schema generation.
 """
 
-from pathlib import Path
-
 from pydantic import BaseModel, DirectoryPath, Field
 
 
