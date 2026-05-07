@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: "💬 GitHub Discussions"
+    url: "https://github.com/CENFARG/agno-docs-mcp/discussions"
+    about: "Ask questions, share ideas, and discuss the project"
+
+  - name: "🔒 Report a Security Vulnerability"
+    url: "https://github.com/CENFARG/agno-docs-mcp/security/advisories"
+    about: "Do NOT open a public issue — use GitHub Security Advisories instead"
+
+  - name: "📖 Agno Documentation"
+    url: "https://docs.agno.com"
+    about: "Official Agno framework documentation"

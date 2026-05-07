@@ -1,0 +1,53 @@
+name: "Feature Request"
+description: "Propose a new feature or enhancement"
+title: "feat: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! We appreciate your ideas.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem Statement"
+      description: "What problem are you trying to solve? Why is this needed?"
+      placeholder: "I cannot currently ... which means I have to ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Proposed Solution"
+      description: "How would you solve it? Describe the tool, option, or API you envision."
+      placeholder: "Add a new MCP tool `export_docs(path, format)` that ..."
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "What other approaches did you consider? Why are they insufficient?"
+      placeholder: |
+        - Workaround: run a local grep — but it lacks BM25 ranking
+        - Alternative: use a vector DB — but it requires separate infrastructure
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: "Affects"
+      description: "Which area does this feature target?"
+      options:
+        - New MCP tool
+        - Search engine (FTS5)
+        - Documentation source (DocSource)
+        - CLI / configuration
+        - CI / developer experience
+        - Other
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "References, mockups, or links to similar features in other projects."

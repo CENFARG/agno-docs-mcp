@@ -7,6 +7,10 @@
 [![MCP](https://img.shields.io/badge/protocol-MCP-black)](https://modelcontextprotocol.io)
 [![CI](https://github.com/CENFARG/agno-docs-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/CENFARG/agno-docs-mcp/actions/workflows/test.yml)
 [![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/CENFARG/agno-docs-mcp)
+[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0-blue)](https://pypi.org/project/agno-docs-mcp)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://cenfarg.github.io/agno-docs-mcp)
+[![OpenSSF Best Practices](https://img.shields.io/badge/openssf-passing-brightgreen)](https://www.bestpractices.dev/projects)
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg)](#contributors)
 
 ## What is this?
 
