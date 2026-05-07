@@ -5,8 +5,8 @@
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
 [![MCP](https://img.shields.io/badge/protocol-MCP-black)](https://modelcontextprotocol.io)
-[![CI](https://github.com/gonzalorrecalde/agno-docs-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/gonzalorrecalde/agno-docs-mcp/actions/workflows/test.yml)
-[![Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)](https://github.com/gonzalorrecalde/agno-docs-mcp)
+[![CI](https://github.com/CENFARG/agno-docs-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/CENFARG/agno-docs-mcp/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/CENFARG/agno-docs-mcp)
 
 ## What is this?
 
@@ -176,8 +176,8 @@ pip install -e ".[dev]"
 
 | Tool | Command | Target |
 |------|---------|--------|
-| Tests | `pytest` | 146 tests, 0 failures |
-| Coverage | `pytest --cov=src/mcp_agno_docs --cov-fail-under=80` | ≥80% |
+| Tests | `pytest` | 158 tests, 0 failures |
+| Coverage | `pytest --cov=src/mcp_agno_docs --cov-fail-under=80` | ≥90% |
 | Lint | `ruff check src/` | 0 violations |
 | Type check | `mypy src/ --strict` | 0 errors |
 

@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] — 2026-05-07
 
 ### Added
-
 - Core MCP server with FastMCP stdio transport
 - `search_docs` tool: FTS5 full-text search with BM25 ranking and snippet highlighting
 - `get_page` tool: individual `.mdx` page retrieval with YAML frontmatter
@@ -20,7 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Domain exception hierarchy (5 classes)
 - Hexagonal architecture with dependency injection via `AppContext`
 - Async wrappers for all blocking I/O (`asyncio.to_thread`)
-- Full test suite: 146 tests (unit + integration + E2E), 82% coverage
+- Full test suite: 158 tests (unit + integration + E2E), 90% coverage
+- MCP tool wrapper tests with mocked FastMCP context
 - GitHub Actions CI pipeline (lint + mypy + pytest on Python 3.11, 3.12)
 - Apache 2.0 license
 - PEP 8, PEP 257, PEP 484 compliance enforced via Ruff and Mypy strict mode
