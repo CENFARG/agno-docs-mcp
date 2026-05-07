@@ -156,12 +156,27 @@ class TestFTS5EngineErrors:
 
     @pytest.mark.asyncio
     async def test_malformed_fts5_query_raises_validation_error(self) -> None:
-        """Unbalanced quotes or special FTS5 syntax should raise ValidationError."""
+        """Unbalanced quotes should raise ValidationError with a generic message."""
         engine = FTS5Engine(FTS5Config())
         await engine.index(DUMMY_DOCS)
 
-        with pytest.raises(ValidationError, match="FTS5 query"):
+        with pytest.raises(ValidationError, match="Invalid search query"):
             await engine.search('"unbalanced')
+
+    @pytest.mark.asyncio
+    async def test_malformed_query_does_not_leak_internal_details(self) -> None:
+        """The error message must NOT expose FTS5 internals to the client."""
+        engine = FTS5Engine(FTS5Config())
+        await engine.index(DUMMY_DOCS)
+
+        with pytest.raises(ValidationError) as exc_info:
+            await engine.search('"unbalanced')
+
+        msg = str(exc_info.value)
+        # Internal SQLite/FTS5 details must NOT appear in the client-facing message.
+        assert "sqlite3" not in msg.lower()
+        assert "OperationalError" not in msg
+        assert "unterminated" not in msg
 
     @pytest.mark.asyncio
     async def test_closed_engine_raises_on_search(self) -> None:
