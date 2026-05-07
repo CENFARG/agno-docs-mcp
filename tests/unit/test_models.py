@@ -78,6 +78,21 @@ class TestSearchDocsInput:
         inp = SearchDocsInput(query="install")
         assert inp.topic is None
 
+    def test_query_rejects_over_max_length(self) -> None:
+        """A query longer than 200 characters must be rejected."""
+        with pytest.raises(PydanticValidationError, match="at most 200 character"):
+            SearchDocsInput(query="x" * 201)
+
+    def test_query_exactly_max_length_passes(self) -> None:
+        """A query exactly 200 characters is accepted."""
+        inp = SearchDocsInput(query="x" * 200)
+        assert len(inp.query) == 200
+
+    def test_topic_rejects_over_max_length(self) -> None:
+        """A topic longer than 100 characters must be rejected."""
+        with pytest.raises(PydanticValidationError, match="at most 100 character"):
+            SearchDocsInput(query="test", topic="x" * 101)
+
 
 class TestSearchExamplesInput:
     """SearchExamplesInput — same validation as SearchDocsInput."""
@@ -152,12 +167,28 @@ class TestLocalSourceConfig:
 
 
 class TestGetPageInput:
-    """GetPageInput accepts a path string."""
+    """GetPageInput validates path length constraints."""
 
     def test_path_stored_as_given(self) -> None:
         """path field is stored as-is."""
         inp = GetPageInput(path="api/agents.mdx")
         assert inp.path == "api/agents.mdx"
+
+    def test_empty_path_rejected(self) -> None:
+        """An empty path string must be rejected."""
+        with pytest.raises(PydanticValidationError, match="at least 1 character"):
+            GetPageInput(path="")
+
+    def test_path_over_max_length_rejected(self) -> None:
+        """A path longer than 500 characters must be rejected."""
+        with pytest.raises(PydanticValidationError, match="at most 500 character"):
+            GetPageInput(path="x" * 501)
+
+    def test_path_exactly_max_length_accepted(self) -> None:
+        """A path exactly 500 characters is accepted."""
+        long_path = "a" * 500
+        inp = GetPageInput(path=long_path)
+        assert len(inp.path) == 500
 
 
 class TestFTS5Config:

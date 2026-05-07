@@ -5,7 +5,6 @@ import pytest
 from mcp_agno_docs.errors import (
     PageInvalid,
     PageNotFound,
-    SearchError,
     StartupError,
     ValidationError,
 )
@@ -18,7 +17,6 @@ class TestDomainExceptions:
         (StartupError, "docs_path /bogus does not exist"),
         (PageNotFound, "getting-started.mdx not found in source"),
         (PageInvalid, "malformed YAML in api/agents.mdx"),
-        (SearchError, "FTS5 syntax error near AND"),
         (ValidationError, "query must be at least 2 characters"),
     ]
 

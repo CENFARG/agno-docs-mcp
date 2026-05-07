@@ -23,12 +23,8 @@ _VALID_TOKENIZERS = frozenset({
     "trigram",
 })
 
-# Column indices in the FTS5 virtual table (0-based).
-COL_TITLE = 0
-COL_DESCRIPTION = 1  # UNINDEXED
+# Column index for the content column in the FTS5 virtual table (0-based).
 COL_CONTENT = 2
-COL_PATH = 3  # UNINDEXED
-COL_KEYWORDS = 4
 
 
 def _escape_fts_phrase(value: str) -> str:

@@ -72,11 +72,7 @@ class SearchHit(BaseModel):
     score: float
 
 
-class DocHit(SearchHit):
-    """Tool output alias for :class:`SearchHit`.
-
-    Exists so tool signatures are self-documenting; identical to SearchHit.
-    """
+DocHit = SearchHit  # type alias for tool-signature self-documentation
 
 
 class NavNode(BaseModel):
@@ -115,7 +111,7 @@ class SearchDocsInput(BaseModel):
         limit: Maximum results (1–50, default 10).
     """
 
-    query: str = Field(min_length=2)
+    query: str = Field(min_length=2, max_length=200)
     topic: str | None = Field(default=None, max_length=100)
     limit: int = Field(default=10, ge=1, le=50)
 
@@ -139,7 +135,7 @@ class GetPageInput(BaseModel):
         path: Relative page path (e.g. ``"api/agents.mdx"``).
     """
 
-    path: str
+    path: str = Field(min_length=1, max_length=500)
 
 
 # ---- Configuration models ----
@@ -161,11 +157,9 @@ class FTS5Config(BaseModel):
     Attributes:
         db_path: Path for file-based SQLite database (``None`` = ``:memory:``).
         tokenizer: FTS5 tokenizer name (e.g. ``"porter"``, ``"unicode61"``).
-        snippet_fragments: Max number of snippet fragments to return.
         snippet_tokens: Max tokens per snippet fragment.
     """
 
     db_path: str | None = None
     tokenizer: str = "porter"
-    snippet_fragments: int = 3
     snippet_tokens: int = 12
