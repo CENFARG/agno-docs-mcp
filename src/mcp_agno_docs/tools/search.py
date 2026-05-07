@@ -14,6 +14,7 @@ import pydantic as _pydantic
 from mcp_agno_docs import errors as domain_err
 from mcp_agno_docs.models import DocHit, SearchDocsInput, SearchExamplesInput, SearchHit
 from mcp_agno_docs.search.base import SearchEngine
+from mcp_agno_docs.utils import _tool_error
 
 from . import mcp
 
@@ -58,8 +59,9 @@ async def _search_examples(
 ) -> list[DocHit]:
     """Search only pages whose path starts with ``examples/``.
 
-    Over-fetches 4× *limit* from the engine, filters client-side to keep
-    only ``examples/``-prefixed hits, then truncates to *limit*.
+    Starts with a 4× overfetch, then retries with an 8× overfetch
+    (max multiplier = 8) if fewer than *limit* example hits are found
+    after client-side filtering.
 
     Args:
         engine: The search engine adapter to query.
@@ -78,9 +80,16 @@ async def _search_examples(
     except _pydantic.ValidationError as exc:
         raise domain_err.ValidationError(str(exc)) from exc
 
-    overfetch = limit * 4
-    hits: list[SearchHit] = await engine.search(query, topic=None, limit=overfetch)
-    filtered = [h for h in hits if h.path.startswith("examples/")]
+    multiplier = 4
+    filtered: list[SearchHit] = []
+    while True:
+        overfetch = limit * multiplier
+        hits: list[SearchHit] = await engine.search(query, topic=None, limit=overfetch)
+        filtered = [h for h in hits if h.path.startswith("examples/")]
+        if len(filtered) >= limit or multiplier >= 8:
+            break
+        multiplier *= 2
+
     return [DocHit(**h.model_dump()) for h in filtered[:limit]]
 
 
@@ -135,16 +144,3 @@ async def search_examples(
     except domain_err.ValidationError as exc:
         raise _tool_error(str(exc)) from exc
     return [h.model_dump() for h in hits]
-
-
-# ---- Error mapping helpers ----
-
-def _tool_error(message: str) -> Exception:
-    """Convert a domain error message into an MCP-level ToolError.
-
-    Uses ``mcp.server.fastmcp.exceptions.ToolError`` so the client
-    receives a structured error response.
-    """
-    from mcp.server.fastmcp.exceptions import ToolError
-
-    return ToolError(message)

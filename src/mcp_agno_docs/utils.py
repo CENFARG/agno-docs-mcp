@@ -1,7 +1,8 @@
 """Shared utility functions for agno-docs-mcp.
 
 Provides a single source of truth for path normalisation used by both
-the tools layer and the sources layer.
+the tools layer and the sources layer. Also provides shared MCP error
+mapping helpers used by tool wrappers.
 """
 
 from mcp_agno_docs.errors import ValidationError
@@ -30,3 +31,37 @@ def normalise_path(path: str) -> str:
     if ".." in segments:
         raise ValidationError(f"Path traversal rejected: {path!r}")
     return "/".join(segments)
+
+
+def _tool_error(message: str) -> Exception:
+    """Convert a domain error message into an MCP-level ToolError.
+
+    Uses ``mcp.server.fastmcp.exceptions.ToolError`` so the client
+    receives a structured error response.
+
+    Args:
+        message: Human-readable error message.
+
+    Returns:
+        A :class:`mcp.server.fastmcp.exceptions.ToolError` instance.
+    """
+    from mcp.server.fastmcp.exceptions import ToolError
+
+    return ToolError(message)
+
+
+def _not_found(message: str) -> Exception:
+    """Raise a structured not-found error for missing pages.
+
+    Uses ``mcp.server.fastmcp.exceptions.ResourceError`` for 404-style
+    responses.
+
+    Args:
+        message: Human-readable error message.
+
+    Returns:
+        A :class:`mcp.server.fastmcp.exceptions.ResourceError` instance.
+    """
+    from mcp.server.fastmcp.exceptions import ResourceError
+
+    return ResourceError(message)

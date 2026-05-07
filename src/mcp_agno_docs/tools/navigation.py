@@ -33,7 +33,7 @@ def _get_navigation(nav: NavTree) -> NavTree:
 # ---- FastMCP tool wrapper ----
 
 @mcp.tool()
-async def get_navigation() -> dict[str, Any]:
+def get_navigation() -> dict[str, Any]:
     """Return the Agno documentation navigation tree.
 
     Returns a hierarchical tree structure with tabs, groups, and pages

@@ -18,9 +18,5 @@ class PageInvalid(Exception):
     """Page exists but failed validation (e.g., malformed frontmatter)."""
 
 
-class SearchError(Exception):
-    """Generic error from the search engine layer."""
-
-
 class ValidationError(Exception):
     """Input validation failure (query too short, path traversal, etc.)."""

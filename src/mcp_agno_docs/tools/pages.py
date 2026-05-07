@@ -13,7 +13,7 @@ import pydantic as _pydantic
 from mcp_agno_docs import errors as domain_err
 from mcp_agno_docs.models import DocPage, GetPageInput
 from mcp_agno_docs.sources.base import DocSource
-from mcp_agno_docs.utils import normalise_path
+from mcp_agno_docs.utils import _not_found, _tool_error, normalise_path
 
 from . import mcp
 
@@ -44,12 +44,7 @@ def _get_page(source: DocSource, path: str) -> DocPage:
         raise domain_err.ValidationError(str(exc)) from exc
 
     normalised = normalise_path(path)
-    try:
-        return source.get_page(normalised)
-    except domain_err.PageNotFound:
-        raise
-    except domain_err.PageInvalid:
-        raise
+    return source.get_page(normalised)
 
 
 # ---- FastMCP tool wrapper ----
@@ -77,19 +72,3 @@ async def get_page(path: str) -> dict[str, Any]:
     except domain_err.PageInvalid as exc:
         raise _tool_error(str(exc)) from exc
     return page.model_dump()
-
-
-# ---- Error mapping helpers ----
-
-def _tool_error(message: str) -> Exception:
-    """Convert a domain error message into an MCP-level ToolError."""
-    from mcp.server.fastmcp.exceptions import ToolError
-
-    return ToolError(message)
-
-
-def _not_found(message: str) -> Exception:
-    """Raise a structured not-found error for missing pages."""
-    from mcp.server.fastmcp.exceptions import ResourceError
-
-    return ResourceError(message)

@@ -1,13 +1,14 @@
-"""Unit tests for mcp_agno_docs.utils — shared path normalisation.
+"""Unit tests for mcp_agno_docs.utils — shared path normalisation and tool error helpers.
 
 Verifies the unified normalise_path() correctly handles normalisation,
 path traversal rejection, backslash conversion, and edge cases.
+Also verifies _tool_error and _not_found produce correct MCP exception types.
 """
 
 import pytest
 
 from mcp_agno_docs.errors import ValidationError
-from mcp_agno_docs.utils import normalise_path
+from mcp_agno_docs.utils import _not_found, _tool_error, normalise_path
 
 
 class TestNormalisePath:
@@ -56,3 +57,23 @@ class TestNormalisePath:
         """Multiple consecutive slashes are collapsed."""
         result = normalise_path("a///b")
         assert result == "a/b"
+
+
+class TestToolErrorHelpers:
+    """ToolError and ResourceError helpers produce correct MCP exception types."""
+
+    def test_tool_error_returns_tool_error(self) -> None:
+        """_tool_error returns a ToolError with the given message."""
+        exc = _tool_error("bad input")
+        from mcp.server.fastmcp.exceptions import ToolError
+
+        assert isinstance(exc, ToolError)
+        assert str(exc) == "bad input"
+
+    def test_not_found_returns_resource_error(self) -> None:
+        """_not_found returns a ResourceError with the given message."""
+        exc = _not_found("page missing")
+        from mcp.server.fastmcp.exceptions import ResourceError
+
+        assert isinstance(exc, ResourceError)
+        assert str(exc) == "page missing"
