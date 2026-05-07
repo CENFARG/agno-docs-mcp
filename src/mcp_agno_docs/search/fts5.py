@@ -6,11 +6,22 @@ calls are wrapped in :func:`asyncio.to_thread`.
 """
 
 import asyncio
+import logging
 import sqlite3
 
 from mcp_agno_docs.errors import ValidationError
 from mcp_agno_docs.models import FTS5Config, IndexDocument, SearchHit
 from mcp_agno_docs.search.base import SearchEngine
+
+logger = logging.getLogger(__name__)
+
+# Valid FTS5 tokenizer names (C3 fix — whitelist validation).
+_VALID_TOKENIZERS = frozenset({
+    "porter",
+    "unicode61",
+    "ascii",
+    "trigram",
+})
 
 # Column indices in the FTS5 virtual table (0-based).
 COL_TITLE = 0
@@ -18,6 +29,39 @@ COL_DESCRIPTION = 1  # UNINDEXED
 COL_CONTENT = 2
 COL_PATH = 3  # UNINDEXED
 COL_KEYWORDS = 4
+
+
+def _escape_fts_phrase(value: str) -> str:
+    """Escape double-quotes and wrap *value* as an FTS5 phrase literal.
+
+    FTS5 uses ``""`` to represent a literal double-quote inside a phrase.
+    This function escapes any embedded double-quotes by doubling them and
+    wraps the result in double-quotes to form a valid FTS5 phrase.
+
+    Args:
+        value: The raw topic or phrase string.
+
+    Returns:
+        An FTS5-safe phrase literal suitable for ``MATCH`` expressions.
+    """
+    escaped = value.replace('"', '""')
+    return f'"{escaped}"'
+
+
+def _validate_tokenizer(tokenizer: str) -> None:
+    """Validate that *tokenizer* is a known-safe FTS5 tokenizer name.
+
+    Args:
+        tokenizer: The tokenizer name from configuration.
+
+    Raises:
+        ValueError: If *tokenizer* is not in the allowed whitelist.
+    """
+    if not tokenizer or tokenizer not in _VALID_TOKENIZERS:
+        raise ValueError(
+            f"Invalid FTS5 tokenizer: {tokenizer!r}. "
+            f"Valid choices: {sorted(_VALID_TOKENIZERS)}"
+        )
 
 
 class FTS5Engine(SearchEngine):
@@ -104,7 +148,7 @@ class FTS5Engine(SearchEngine):
 
             if topic:
                 sql += " AND keywords MATCH ?"
-                params.append(f'"{topic}"')
+                params.append(_escape_fts_phrase(topic))
 
             sql += " ORDER BY score LIMIT ?"
             params.append(limit)
@@ -112,9 +156,8 @@ class FTS5Engine(SearchEngine):
             try:
                 rows = conn.execute(sql, params).fetchall()
             except sqlite3.OperationalError as exc:
-                raise ValidationError(
-                    f"FTS5 query error: {exc}"
-                ) from exc
+                logger.warning("FTS5 query error: %s", exc)
+                raise ValidationError("Invalid search query syntax") from exc
 
             return [
                 SearchHit(
@@ -156,17 +199,21 @@ class FTS5Engine(SearchEngine):
         return self._conn
 
     def _create_schema(self) -> None:
-        """Create the ``docs`` FTS5 virtual table with Porter stemming.
+        """Create the ``docs`` FTS5 virtual table with configurable tokenizer.
+
+        Validates the tokenizer against a whitelist before executing DDL.
 
         Raises:
+            ValueError: If the configured tokenizer is not in the whitelist.
             RuntimeError: If table creation fails (engine left unusable).
         """
         assert self._conn is not None
         tokenizer = self._config.tokenizer
+        _validate_tokenizer(tokenizer)
         try:
             self._conn.execute(
-                f"CREATE VIRTUAL TABLE IF NOT EXISTS docs USING fts5("
-                f"title, description UNINDEXED, content, path UNINDEXED, "
+                "CREATE VIRTUAL TABLE IF NOT EXISTS docs USING fts5("
+                "title, description UNINDEXED, content, path UNINDEXED, "
                 f"keywords, tokenize='{tokenizer}')"
             )
         except sqlite3.OperationalError as exc:

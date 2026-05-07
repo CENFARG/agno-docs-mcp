@@ -13,32 +13,12 @@ import pydantic as _pydantic
 from mcp_agno_docs import errors as domain_err
 from mcp_agno_docs.models import DocPage, GetPageInput
 from mcp_agno_docs.sources.base import DocSource
+from mcp_agno_docs.utils import normalise_path
 
 from . import mcp
 
 
 # ---- Internal (testable) functions ----
-
-def _normalise_path(path: str) -> str:
-    """Normalise a documentation path and reject traversal attempts.
-
-    Strips leading ``/``, collapses ``.`` and empty segments, converts
-    backslashes to forward slashes, and rejects any path containing ``..``.
-
-    Args:
-        path: Raw path string from the client request.
-
-    Returns:
-        Normalised POSIX relative path.
-
-    Raises:
-        ValidationError: If *path* contains ``..`` (path traversal attempt).
-    """
-    clean = path.replace("\\", "/").lstrip("/")
-    segments = [s for s in clean.split("/") if s not in ("", ".")]
-    if ".." in segments:
-        raise domain_err.ValidationError(f"Path traversal rejected: {path!r}")
-    return "/".join(segments)
 
 
 def _get_page(source: DocSource, path: str) -> DocPage:
@@ -63,7 +43,7 @@ def _get_page(source: DocSource, path: str) -> DocPage:
     except _pydantic.ValidationError as exc:
         raise domain_err.ValidationError(str(exc)) from exc
 
-    normalised = _normalise_path(path)
+    normalised = normalise_path(path)
     try:
         return source.get_page(normalised)
     except domain_err.PageNotFound:

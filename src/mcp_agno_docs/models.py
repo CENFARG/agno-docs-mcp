@@ -116,7 +116,7 @@ class SearchDocsInput(BaseModel):
     """
 
     query: str = Field(min_length=2)
-    topic: str | None = None
+    topic: str | None = Field(default=None, max_length=100)
     limit: int = Field(default=10, ge=1, le=50)
 
 

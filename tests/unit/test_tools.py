@@ -20,8 +20,9 @@ from mcp_agno_docs.models import (
 from mcp_agno_docs.search.base import SearchEngine
 from mcp_agno_docs.sources.base import DocSource
 from mcp_agno_docs.tools.navigation import _get_navigation
-from mcp_agno_docs.tools.pages import _get_page, _normalise_path
+from mcp_agno_docs.tools.pages import _get_page
 from mcp_agno_docs.tools.search import _search_docs, _search_examples
+from mcp_agno_docs.utils import normalise_path
 
 
 # ---- Fixtures ----
@@ -167,17 +168,17 @@ class TestNormalisePath:
     )
     def test_normalises_path(self, raw: str, expected: str) -> None:
         """Paths are normalised: leading slash stripped, backslash converted, . collapsed."""
-        assert _normalise_path(raw) == expected
+        assert normalise_path(raw) == expected
 
     def test_rejects_parent_traversal(self) -> None:
         """Path containing '..' raises ValidationError."""
         with pytest.raises(ValidationError, match="traversal"):
-            _normalise_path("../etc/passwd")
+            normalise_path("../etc/passwd")
 
     def test_rejects_double_dot_anywhere(self) -> None:
         """'..' anywhere in the path is rejected."""
         with pytest.raises(ValidationError, match="traversal"):
-            _normalise_path("api/../secrets")
+            normalise_path("api/../secrets")
 
 
 # ---- get_page ----
