@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from mcp_agno_docs.errors import PageNotFound, SearchError, StartupError, ValidationError
+from mcp_agno_docs.errors import PageNotFound, StartupError, ValidationError
 from mcp_agno_docs.models import (
     DocFrontmatter,
     DocPage,
